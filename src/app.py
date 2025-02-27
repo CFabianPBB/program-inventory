@@ -27,6 +27,10 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/health')
+def health():
+    return "OK", 200
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
