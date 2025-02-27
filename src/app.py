@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 import time
+import logging
 from flask import Flask, request, render_template, send_from_directory, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 import threading
@@ -13,6 +14,7 @@ from program_inventory import ProgramInventoryAgent
 # Create Flask app with custom template folder path pointing to templates inside src
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
+app.logger.setLevel(logging.INFO)
 
 # Configure upload folder
 UPLOAD_FOLDER = '../input'
@@ -116,12 +118,26 @@ def process_file_background(task_id, filepath, website_url, programs_per_departm
         # Combine results
         final_df = pd.concat(all_programs, ignore_index=True)
         
-        # Generate a unique output filename based on the input filename
+        # Generate a unique output filename
         output_filename = f"programs_{os.path.basename(filepath)}"
-        output_filepath = os.path.join(OUTPUT_FOLDER, output_filename)
         
-        # Save to Excel
-        final_df.to_excel(output_filepath, index=False)
+        # Try multiple output paths to ensure the file is saved somewhere accessible
+        output_paths = [
+            os.path.join(OUTPUT_FOLDER, output_filename),
+            os.path.join('output', output_filename),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), '../output', output_filename)
+        ]
+        
+        # Try to save to all locations
+        for output_path in output_paths:
+            try:
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                # Save to Excel
+                final_df.to_excel(output_path, index=False)
+                app.logger.info(f"File saved successfully to: {output_path}")
+            except Exception as e:
+                app.logger.error(f"Error saving to {output_path}: {str(e)}")
         
         # Update task status
         processing_tasks[task_id]['status'] = 'completed'
@@ -168,6 +184,25 @@ def download_file(filename):
 
 @app.route('/get-file/<filename>')
 def get_file(filename):
+    # Make sure the file exists
+    file_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+    if not os.path.exists(file_path):
+        # Try alternative paths if the file doesn't exist in the expected location
+        alternative_paths = [
+            os.path.join('output', filename),  # Try root/output folder
+            os.path.join('../output', filename),  # Try parent/output folder
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), '../output', filename)  # Try absolute path
+        ]
+        
+        for path in alternative_paths:
+            if os.path.exists(path):
+                app.logger.info(f"Found file at alternative path: {path}")
+                return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True)
+        
+        app.logger.error(f"File not found: {filename} in {file_path} or alternative paths")
+        return "File not found", 404
+    
+    app.logger.info(f"Serving file from: {app.config['OUTPUT_FOLDER']}/{filename}")
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename, as_attachment=True)
 
 if __name__ == '__main__':
