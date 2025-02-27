@@ -3,7 +3,7 @@ import pandas as pd
 from flask import Flask, request, render_template, send_from_directory, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import io
-from program_inventory import ProgramInventoryAgent
+from src.program_inventory import ProgramInventoryAgent
 
 # Create Flask app with custom template folder path
 app = Flask(__name__, template_folder='src/templates')
