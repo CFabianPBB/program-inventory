@@ -1,23 +1,26 @@
 import os
+import sys
 import pandas as pd
 from flask import Flask, request, render_template, send_from_directory, redirect, url_for, flash
 from werkzeug.utils import secure_filename
-import io
-from src.program_inventory import ProgramInventoryAgent
 
-# Create Flask app with custom template folder path
-app = Flask(__name__, template_folder='src/templates')
+# Add current directory to path to find program_inventory.py in the same folder
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from program_inventory import ProgramInventoryAgent
+
+# Create Flask app with custom template folder path pointing to templates inside src
+app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
 
-# Configure upload folder - using your existing input/output folders
-UPLOAD_FOLDER = 'input'
-OUTPUT_FOLDER = 'output'
+# Configure upload folder
+UPLOAD_FOLDER = '../input'
+OUTPUT_FOLDER = '../output'
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
-# Create folders if they don't exist (though you already have them)
+# Create folders if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
