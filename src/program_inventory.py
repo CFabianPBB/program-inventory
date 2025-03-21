@@ -30,7 +30,7 @@ class ProgramInventoryAgent:
 
         Website: {website_url}
 
-        Please predict exactly {programs_per_department} programs that are likely provided as well as program descriptions. 
+        Please predict exactly {programs_per_department} programs that are likely provided as well as program descriptions. You are a government expert, and when you see evidence of positions in a department, you know how to predict what programs those positions are working on. 
         DO NOT GENERATE FEWER THAN {programs_per_department} PROGRAMS.
 
         For each program, numbered 1 through {programs_per_department}, use exactly this format:
