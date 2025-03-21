@@ -18,7 +18,7 @@ class ProgramInventoryAgent:
         self.llm = ChatOpenAI(
             api_key=api_key,
             model="gpt-4",
-            temperature=0.7
+            temperature=0.5
         )
         
         # Program inference prompt template
